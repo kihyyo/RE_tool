@@ -4,7 +4,19 @@ from .setup import *
 
 name = 'download'
 
-from .downloader import REDownloader
+DEFINE_DEV = False
+if os.path.exists(os.path.join(os.path.dirname(__file__), 'downloader.py')):
+    DEFINE_DEV = True
+try:
+    if DEFINE_DEV:
+        from .downloader import REDownloader
+    else:
+        from support import SupportSC
+        REDownloader = SupportSC.load_module_P(P, 'downloader').REDownloader
+except Exception as e:
+    P.logger.error(f'Exception:{str(e)}')
+    P.logger.error(traceback.format_exc())
+    
 from .subprocess_tool import ToolSubprocess
 
 class ModuleDownload(PluginModuleBase):
