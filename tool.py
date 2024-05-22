@@ -50,7 +50,7 @@ class WVTool(object):
             if platform.system() == 'Windows':
                 command += [f'"{url}"', '--auto-select', '--no-log', '--save-dir', temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
             else:
-                command += [url, '--auto-select', '--save-dir', '--no-log', temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
+                command += [url, '--auto-select', '--no-log', '--save-dir',  temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
 
             tool_subprocess = ToolSubprocess()
             result = tool_subprocess.execute_command_return(command)
