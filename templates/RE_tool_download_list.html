@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+
+<table id="result_table" class="table table-sm  tableRowHover">
+  <thead>
+    <tr>
+      <th style="width:5%; text-align:center;">IDX</th>
+      <th style="width:10%; text-align:center;">Plugin</th>
+      <th style="width:15%; text-align:center;">시작시간</th>
+      <th style="width:30%; text-align:center;">파일명</th>
+      <th style="width:20%; text-align:center;">상태</th>
+      <th style="width:10%; text-align:center;">진행시간</th>
+      <th style="width:10%; text-align:center;">Action</th>
+    </tr>
+  </thead>
+  <tbody id="list" >
+  </tbody>
+</table>
+
+<script type="text/javascript">
+hideMenuPage();
+
+$(document).ready(function(){
+  
+  var socket = io.connect(window.location.href);
+
+  socket.on('on_start', function(data){
+    document.getElementById("log").innerHTML += data.data;
+    document.getElementById("log").scrollTop = document.getElementById("log").scrollHeight;
+    document.getElementById("log").style.visibility = 'visible';
+    $('#loading').hide();
+  });
+
+  socket.on('add', function(data){
+    str = make_item(data);
+    if (current_data == null || current_data.length == 0) {
+      current_data = Array();
+      $("#list").html(str);
+    } else {
+      $("#list").html($("#list").html() + str);
+    }
+    current_data.push(data);
+  });
+
+  socket.on('refresh', function(data) {
+    refresh_item(data);
+  });
+
+
+  globalSendCommand('list', null, null, null, function(data) {
+    $("#list").html('');
+    current_data = data;
+    if (data.length == 0) {
+      str = "<tr><td colspan='10'><h4>작업이 없습니다.</h4><td><tr>";
+    } else {
+      str = ''
+      for(i in data) {
+        str += make_item(data[i]);
+      }
+    }
+    $("#list").html(str);
+  });
+});
+
+$("body").on('click', '#stop_btn', function(e){
+  e.stopPropagation();
+  e.preventDefault();
+  globalSendCommand('stop', $(this).data('idx'), null, null, function(ret){
+    refresh_item(ret.data);
+  });
+});
+
+
+function refresh_item(data) {
+  $('#tr1_'+data.idx).html(make_item1(data));
+  $('#collapse_'+data.idx).html(make_item2(data));
+}
+
+function make_item(data) {
+  str = '<tr id="tr1_'+data.idx+'" style="cursor: pointer;" data-toggle="collapse" data-target="#collapse_'+ data.idx + '" aria-expanded="true" >';
+  str += make_item1(data);
+  str += '</tr>';
+  str += '<tr id="collapse_' + data.idx + '" class="collapse tableRowHoverOff" style="cursor: pointer;">';
+  str += make_item2(data);
+  str += '</tr>';
+  return str;
+}
+
+function make_item1(data) {
+  str = '<td scope="col" style="width:5%; text-align:center;">'+ data.idx + '</td>';
+  str += '<td scope="col" style="width:10%; text-align:center;">'+ data.callback_id + '</td>';
+  str += '<td scope="col" style="width:10%; text-align:center;">'+ data.start_time + '</td>';
+  str += '<td scope="col" style="width:20%; text-align:center;">'+ data.output_filename + '</td>';
+
+  if (data.status == 'EXIST_OUTPUT_FILEPATH') tmp = "이미 파일이 있음.";
+  else if (data.status == 'DOWNLOADING') tmp = "다운로드중";
+  else if (data.status == 'COMPLETED') tmp = "다운로드 완료";
+  else if (data.status == 'USER_STOP') tmp = "사용자 중지";
+  else tmp = data.status;
+
+  str += '<td id="status_'+data.idx+'" scope="col" style="width:15%; text-align:center;">'+ tmp + '</td>';
+  var visi = 'hidden';
+  if (parseInt(data.percent) > 0) {
+    visi = 'visible';
+  }
+  str += '<td id="download_time_'+data.idx+'" scope="col" style="width:10%; text-align:center;">'+ data.download_time + '</td>';
+  str += '<td id="button_'+data.idx+'" scope="col" style="width:10%; text-align:center;">';
+  if (data.status == 'DOWNLOADING') {
+    str += j_button('stop_btn', '중지', {'idx':data.idx}, 'danger', false, true);
+  }
+  str += '</td>'
+  return str;
+}
+
+function make_item2(data) {
+  str = '<td colspan="11">';
+  str += '<div id="detail_'+data.idx+'">';
+  str += get_detail(data);
+  str += '</div>';
+  str += '</td>';   
+  return str;
+}
+
+
+function get_detail(data) {
+  var str = "";
+  str += j_row_info('MPD URL', data.mpd_url);
+  str += j_row_info('MPD Headers', '<pre style="white-space: pre-wrap;">' +JSON.stringify(data.mpd_headers, null, 2) + '</pre>');
+
+  str += j_row_info('License URL', data.license_url);
+  str += j_row_info('License Headers', '<pre style="white-space: pre-wrap;">' +JSON.stringify(data.license_headers, null, 2) + '</pre>');
+  str += j_row_info('저장 폴더', data.output_dir);
+  return str;
+}
+
+
+$("body").on('click', '#stop_btn', function(e){
+  e.stopPropagation();
+  e.preventDefault();
+  globalSendCommand('stop', $(this).data('idx'), null, null, function(ret){
+    refresh_item(ret.data);
+  });
+});
+
+
+</script>    
+{% endblock %}
