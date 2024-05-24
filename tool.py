@@ -41,13 +41,19 @@ class WVTool(object):
             if os.path.exists(filepath) or os.path.exists(filepath_sub):
                 return True
             command = [M3U8DL]
-            if headers is not None:
-                default_headers = cls.convert_headers_to_string(headers)
-                command += ['--header', default_headers]
             if platform.system() == 'Windows':
+                if headers is not None:
+                    for key, value in headers.items():
+                        if key.lower() == 'accept-encoding':
+                            continue
+                        value = value.replace('"', '\\"')
+                        command.append('--header="%s:%s"' % (key, value))
                 command += [f'"{url}"', '--auto-select', '--no-log', '--save-dir', temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
             else:
-                command += [url, '--auto-select', '--no-log', '--save-dir',  temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
+                if headers is not None:
+                    default_headers = cls.convert_headers_to_string(headers)
+                    command += ['--header', default_headers]
+                command += [url, '--auto-select', '--no-log', '--save-dir', temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
 
             tool_subprocess = ToolSubprocess()
             result = tool_subprocess.execute_command_return(command)
