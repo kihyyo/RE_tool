@@ -42,11 +42,8 @@ class WVTool(object):
                 return True
             command = [M3U8DL]
             if headers is not None:
-                for key, value in headers.items():
-                    if key.lower() == 'accept-encoding':
-                        continue
-                    value = value.replace('"', '\\"')
-                    command.append('--header="%s:%s"' % (key, value))
+                default_headers = cls.convert_headers_to_string(headers)
+                command += ['--header', default_headers]
             if platform.system() == 'Windows':
                 command += [f'"{url}"', '--auto-select', '--no-log', '--save-dir', temp_dir, '--save-name', savename, '--tmp-dir', temp_dir]
             else:
