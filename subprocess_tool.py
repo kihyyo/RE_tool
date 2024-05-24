@@ -36,7 +36,9 @@ class ToolSubprocess(object):
 
     def execute_command_return(self, command, format=None, force_log=False, shell=False, env=None, timeout=1800):
         try:
-
+            if platform.system() == 'Windows':
+                command = ' '.join(command)
+                
             self.process = subprocess.Popen(
                 command,
                 stdin=subprocess.PIPE,
@@ -47,7 +49,6 @@ class ToolSubprocess(object):
                 env=env,
                 encoding='utf8'
             )
-
 
             ret = []
             try:
