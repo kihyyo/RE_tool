@@ -177,12 +177,36 @@ class WVTool(object):
             logger.error(f"Exception:{str(e)}")
             logger.error(traceback.format_exc())
 
+    @classmethod
+    def repackage(cls, source):
+        if not os.path.exists(source):
+            raise ValueError("Cannot repackage a Track that has not been downloaded.")
+        fixed_file = f"{os.path.splitext(source)[0]}_fixed" + os.path.splitext(source)[1]
+        try:
+            subprocess.run([
+                "ffmpeg", "-hide_banner", "-loglevel", "panic", "-i", source, "-map_metadata", "-1","-fflags", "bitexact", "-codec", "copy", fixed_file], check=True)
+            if os.path.exists(source) and os.path.exists(fixed_file):
+                os.remove(source)
+                os.rename(fixed_file, source)
+        except subprocess.CalledProcessError:
+            pass
+
+
+    @classmethod
+    def mkvmerge_merge(cls, command):
+        try:
+            if command:
+                command = [MKVMERGE] + command
+                subprocess.run(command)
+        except Exception as e: 
+            logger.error(f"Exception:{str(e)}")
 
     @classmethod
     def ffmpeg_merge(cls, command):
         try:
-            command = [FFMPEG] + command
-            subprocess.run(command)
+            if command:
+                command = [FFMPEG] + command
+                subprocess.run(command)
         except Exception as e: 
             logger.error(f"Exception:{str(e)}")
             logger.error(traceback.format_exc())
